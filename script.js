@@ -1,219 +1,102 @@
 const consoleEl = document.getElementById("console");
-const lineNumbersEl = document.getElementById("lineNumbers");
-const inputArea = document.getElementById("inputArea");
-const userInput = document.getElementById("userInput");
-const submitBtn = document.getElementById("submitBtn");
 
-let step = -1;
-let housePrice = 0;
-let downPaymentPercent = 0;
-let closingCostPercent = 0;
-let buyers = 0;
-let isAnimating = false;
+let step = 0;
+let housePrice;
+let downPaymentPercent;
+let closingCostPercent;
+let buyers;
 
-function renderLineNumbers() {
-  if (!lineNumbersEl) return;
-  lineNumbersEl.innerHTML = "";
-  for (let i = 1; i <= 32; i++) {
-    const num = document.createElement("div");
-    num.textContent = i;
-    lineNumbersEl.appendChild(num);
-  }
-}
-
-function scrollConsole() {
-  if (consoleEl) {
-    consoleEl.scrollTop = consoleEl.scrollHeight;
-  }
-}
-
-function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function addLine(text = "", className = "muted", prefix = "") {
+function addLine(text) {
   const line = document.createElement("div");
-  line.className = `console-line ${className}`;
-
-  if (prefix) {
-    const prefixSpan = document.createElement("span");
-    prefixSpan.className = "console-prefix";
-    prefixSpan.textContent = prefix;
-    line.appendChild(prefixSpan);
-  }
-
-  const textSpan = document.createElement("span");
-  textSpan.textContent = text;
-  line.appendChild(textSpan);
-
+  line.className = "console-line";
+  line.textContent = text;
   consoleEl.appendChild(line);
-  scrollConsole();
-  return line;
 }
 
-async function typeLine(text, className = "muted", prefix = "", speed = 18) {
-  const line = document.createElement("div");
-  line.className = `console-line ${className}`;
+function addInput(callback) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "console-line";
 
-  if (prefix) {
-    const prefixSpan = document.createElement("span");
-    prefixSpan.className = "console-prefix";
-    prefixSpan.textContent = prefix;
-    line.appendChild(prefixSpan);
-  }
+  const prefix = document.createElement("span");
+  prefix.textContent = "> ";
+  prefix.style.color = "#d4af37";
 
-  const textSpan = document.createElement("span");
-  const cursor = document.createElement("span");
-  cursor.className = "console-cursor";
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "console-input";
+  input.autofocus = true;
 
-  line.appendChild(textSpan);
-  line.appendChild(cursor);
-  consoleEl.appendChild(line);
-  scrollConsole();
+  wrapper.appendChild(prefix);
+  wrapper.appendChild(input);
+  consoleEl.appendChild(wrapper);
 
-  for (let i = 0; i < text.length; i++) {
-    textSpan.textContent += text[i];
-    scrollConsole();
-    await wait(speed);
-  }
+  input.focus();
 
-  cursor.remove();
-  return line;
-}
-
-function setInputEnabled(enabled) {
-  if (!userInput || !submitBtn) return;
-  userInput.disabled = !enabled;
-  submitBtn.disabled = !enabled;
-  if (enabled) userInput.focus();
-}
-
-function addUserLine(value) {
-  addLine(value, "input", "•");
-}
-
-function showStartScreen() {
-  step = -1;
-  housePrice = 0;
-  downPaymentPercent = 0;
-  closingCostPercent = 0;
-  buyers = 0;
-  isAnimating = false;
-
-  consoleEl.innerHTML = "";
-  inputArea.style.display = "none";
-  userInput.value = "";
-  setInputEnabled(false);
-
-  const line = document.createElement("div");
-  line.className = "console-line brand";
-  line.innerHTML =
-    'Click <span class="run-link" id="runLink">RUN</span> to preview the final project you will build.';
-  consoleEl.appendChild(line);
-  scrollConsole();
-
-  const runLink = document.getElementById("runLink");
-  runLink.addEventListener("click", startProgram);
-}
-
-async function startProgram() {
-  if (isAnimating) return;
-
-  step = 0;
-  housePrice = 0;
-  downPaymentPercent = 0;
-  closingCostPercent = 0;
-  buyers = 0;
-  isAnimating = true;
-
-  consoleEl.innerHTML = "";
-  inputArea.style.display = "block";
-  userInput.value = "";
-  setInputEnabled(false);
-
-  await typeLine("Welcome to the House Buying Cost Splitter!", "brand");
-  await typeLine("What is the house price? $", "question");
-
-  isAnimating = false;
-  setInputEnabled(true);
-}
-
-async function finishProgram() {
-  isAnimating = true;
-  setInputEnabled(false);
-
-  const downPayment = housePrice * (downPaymentPercent / 100);
-  const closingCosts = housePrice * (closingCostPercent / 100);
-  const totalNeeded = downPayment + closingCosts;
-  const perPerson = totalNeeded / buyers;
-
-  await wait(160);
-  await typeLine(`Down payment amount: $${downPayment.toFixed(2)}`, "highlight");
-  await typeLine(`Closing costs amount: $${closingCosts.toFixed(2)}`, "highlight");
-  await typeLine(`Total upfront needed: $${totalNeeded.toFixed(2)}`, "result");
-  await typeLine(`Each buyer needs to contribute: $${perPerson.toFixed(2)}`, "result");
-
-  isAnimating = false;
-}
-
-async function handleInput() {
-  const value = userInput.value.trim();
-  if (!value || userInput.disabled || isAnimating) return;
-
-  addUserLine(value);
-  userInput.value = "";
-
-  if (step === 0) {
-    housePrice = parseFloat(value);
-    step = 1;
-    setInputEnabled(false);
-    isAnimating = true;
-
-    await wait(220);
-    await typeLine("What percentage is the down payment? 10, 20, or 30?", "question");
-
-    isAnimating = false;
-    setInputEnabled(true);
-  } else if (step === 1) {
-    downPaymentPercent = parseInt(value, 10);
-    step = 2;
-    setInputEnabled(false);
-    isAnimating = true;
-
-    await wait(220);
-    await typeLine("What percentage are closing costs? 2, 3, or 5?", "question");
-
-    isAnimating = false;
-    setInputEnabled(true);
-  } else if (step === 2) {
-    closingCostPercent = parseInt(value, 10);
-    step = 3;
-    setInputEnabled(false);
-    isAnimating = true;
-
-    await wait(220);
-    await typeLine("How many buyers are splitting the purchase?", "question");
-
-    isAnimating = false;
-    setInputEnabled(true);
-  } else if (step === 3) {
-    buyers = parseInt(value, 10);
-    step = 4;
-    await finishProgram();
-  }
-}
-
-if (!consoleEl || !lineNumbersEl || !inputArea || !userInput || !submitBtn) {
-  console.error("Missing required HTML element.");
-} else {
-  submitBtn.addEventListener("click", handleInput);
-
-  userInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      handleInput();
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      const value = input.value;
+      input.disabled = true;
+      callback(value);
     }
   });
-
-  renderLineNumbers();
-  showStartScreen();
 }
+
+function askQuestion(text, handler) {
+  addLine(text);
+  addInput(handler);
+}
+
+function startProgram() {
+  consoleEl.innerHTML = "";
+  addLine("Welcome to the House Buying Cost Splitter!");
+  nextStep();
+}
+
+function nextStep() {
+  if (step === 0) {
+    askQuestion("What is the house price?", (val) => {
+      housePrice = parseFloat(val);
+      step++;
+      nextStep();
+    });
+  }
+
+  else if (step === 1) {
+    askQuestion("What percentage is the down payment? (10, 20, 30)", (val) => {
+      downPaymentPercent = parseFloat(val);
+      step++;
+      nextStep();
+    });
+  }
+
+  else if (step === 2) {
+    askQuestion("What percentage are closing costs? (2, 3, 5)", (val) => {
+      closingCostPercent = parseFloat(val);
+      step++;
+      nextStep();
+    });
+  }
+
+  else if (step === 3) {
+    askQuestion("How many buyers are splitting the purchase?", (val) => {
+      buyers = parseInt(val);
+      step++;
+      nextStep();
+    });
+  }
+
+  else if (step === 4) {
+    const downPayment = housePrice * (downPaymentPercent / 100);
+    const closingCosts = housePrice * (closingCostPercent / 100);
+    const total = downPayment + closingCosts;
+    const perPerson = total / buyers;
+
+    addLine("");
+    addLine("Down payment: $" + downPayment.toFixed(2));
+    addLine("Closing costs: $" + closingCosts.toFixed(2));
+    addLine("Total upfront: $" + total.toFixed(2));
+    addLine("Each buyer contributes: $" + perPerson.toFixed(2));
+  }
+}
+
+startProgram();
