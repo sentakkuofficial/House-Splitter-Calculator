@@ -37,7 +37,14 @@ body {
   font-family: var(--sans);
   overflow-x: hidden;
 }
-
+.console-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #6ee7ff;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.95rem;
+}
 .bg-overlay {
   position: fixed;
   inset: 0;
