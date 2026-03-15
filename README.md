@@ -25,3 +25,6 @@ The program calculates:
 - closing cost amount
 - total upfront needed
 - each buyer's share
+
+
+https://sentakkuofficial.github.io/House-Splitter-Calculator/
